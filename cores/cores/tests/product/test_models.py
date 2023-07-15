@@ -1,0 +1,26 @@
+import pytest
+
+pytestmark = pytest.mark.django_db
+
+class TestCategoryModel:
+	def test_str_method(self, category_factory):
+		# arrange
+		x = category_factory(name="test_cat")
+		# pass
+		assert x.__str__() == "test_cat"
+
+
+class TestBrandModel:
+	def test_str_method(self, brand_factory):
+		# arrange
+		x = brand_factory(name="test_brand")
+		# pass
+		assert x.__str__() == "test_brand"
+
+
+class TestProductModel:
+	def test_str_method(self, product_factory):
+		# arrange
+		x = product_factory()
+		# pass
+		assert x.__str__() == "test_product"

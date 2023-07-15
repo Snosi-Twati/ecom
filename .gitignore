@@ -1,0 +1,7 @@
+
+venv/
+*.md
+*.sqlite3
+cores/schema.yml
+cores/.coverage
+cores/pytest.ini
