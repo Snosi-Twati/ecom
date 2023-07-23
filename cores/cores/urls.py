@@ -24,10 +24,11 @@ router = DefaultRouter()
 router.register(r"category", views.CategoryViewSet)
 router.register(r"brand", views.BrandViewSet)
 router.register(r"product", views.ProductViewSet)
+router.register(r"productline", views.ProductLineViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
     path('api/schema', SpectacularAPIView.as_view() , name='schemaAPI'),
-     path('api/schema/Doc', SpectacularSwaggerView.as_view(url_name='schemaAPI') , name='ApiDoc'),
+    path('api/schema/Doc', SpectacularSwaggerView.as_view(url_name='schemaAPI') , name='ApiDoc'),
 ]
