@@ -5,3 +5,9 @@ venv/
 cores/schema.yml
 cores/.coverage
 cores/pytest.ini
+.DS_Store
+htmlcov/
+.DS_Store
+cores/.DS_Store
+cores/cores/.DS_Store
+cores/cores/tests/.DS_Store
