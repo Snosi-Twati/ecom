@@ -42,6 +42,19 @@ class Product(models.Model):
 	def __str__(self):
 		return self.name # + " === > is active ( "+ self.is_active.__str__()+" ) "
 
+
+
+
+class Attribute(models.Model):
+	# pass
+	name = models.CharField( max_length=100)
+	description =models.TextField(blank=True)
+
+class AttributeValue(models.Model):
+	# pass
+	attr_value = models.CharField( max_length=100)
+	attribute  = models.ForeignKey(Attribute, on_delete=models.CASCADE, related_name='attribute_value')
+
 class ProductLine(models.Model):
 	prince = models.DecimalField( max_digits=12, decimal_places=3,null=False)
 	sku = models.CharField(max_length=100,null=False)
@@ -49,6 +62,7 @@ class ProductLine(models.Model):
 	product  = models.ForeignKey('product', on_delete=models.CASCADE, related_name='product_line')
 	is_active = models.BooleanField(default=False)
 	order = OrderField(blank=True ,unique_for_field='product')
+	attribute_value = models.ManyToManyField(AttributeValue,through="ProductLineAttributeValue")
 	objects = ActiveQueryset().as_manager()
 
 	def clean(self, exclude=None):
@@ -63,3 +77,10 @@ class ProductLine(models.Model):
 	
 	def __str__(self):
 		return str(self.sku)
+
+class ProductLineAttributeValue(models.Model):
+	attribute_value  = models.ForeignKey(AttributeValue, on_delete=models.CASCADE, related_name='product_attribute_value_av')
+	product_line  = models.ForeignKey(ProductLine, on_delete=models.CASCADE, related_name='product_attribute_value_pl')
+
+	class Meta:
+		unique_together = ("attribute_value","product_line")
