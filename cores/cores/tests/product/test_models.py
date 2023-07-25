@@ -29,12 +29,27 @@ class TestProductModel:
 class TestProductLineModel:
 	def test_str_method(self, product_line_factory):
 		# arrange
-		x = product_line_factory()
+		x = product_line_factory(sku="test_product")
 		# pass
-		assert x.__str__() 
+		assert x.__str__() == "test_product"
 	
 	def test_dublicate_order_values(self, product_line_factory,product_factory):
 		obj = product_factory()
 		product_line_factory(order=1,product=obj)
 		with pytest.raises(ValidationError):
 			product_line_factory(order=1,product=obj).clean()
+
+class TestProductImageModel:
+	def test_str_method(self, product_image_factory):
+		obj= product_image_factory(name='test-image.jpg')
+		# obj = product_image_factory(sku='12345')
+		# arrange
+		# x = product_line_factory()
+		# pass
+		assert obj.__str__() == "test-image.jpg"
+	
+	# def test_dublicate_order_values(self, product_line_factory,product_factory):
+	# 	obj = product_factory()
+	# 	product_line_factory(order=1,product=obj)
+	# 	with pytest.raises(ValidationError):
+	# 		product_line_factory(order=1,product=obj).clean()

@@ -3,11 +3,17 @@ from mptt.models import MPTTModel, TreeForeignKey
 from .fields import OrderField
 from django.core.exceptions import ValidationError
 
+"""
+Active Query set 
+"""
 class ActiveQueryset(models.QuerySet):
 
 	def isactive(self):
 		return self.filter(is_active=True)
 
+"""
+Category 
+"""
 class Category (MPTTModel): #(models.Model):
 	name = models.CharField(max_length=100)
 	parent = TreeForeignKey("self", on_delete=models.PROTECT, null=True, blank=True) #models.IntegerField()# 
@@ -19,6 +25,9 @@ class Category (MPTTModel): #(models.Model):
 	def __str__(self):
 		return self.name.__str__()
 
+"""
+Brand 
+"""
 class Brand(models.Model):
 	name = models.CharField(max_length=100)
 
@@ -28,6 +37,9 @@ class Brand(models.Model):
 	def __str__(self):
 		return self.name
 
+"""
+Product 
+"""
 class Product(models.Model):
 	name = models.CharField(max_length=100)
 	description =models.TextField(blank=True)
@@ -36,35 +48,72 @@ class Product(models.Model):
 	brand = models.ForeignKey('Brand', on_delete=models.CASCADE,default=-1)
 	category = TreeForeignKey('Category', on_delete=models.SET_NULL,null=True,blank=True)
 	is_active = models.BooleanField(default=False)
+	
 	objects = ActiveQueryset().as_manager()
 	# isactive = ActiveManager()
 
 	def __str__(self):
 		return self.name # + " === > is active ( "+ self.is_active.__str__()+" ) "
 
-
-
-
+"""
+Attribute 
+"""
 class Attribute(models.Model):
 	# pass
 	name = models.CharField( max_length=100)
 	description =models.TextField(blank=True)
 
+	def __str__(self):
+		return str(self.name)
+
+"""
+Product Type
+"""
+class ProductType(models.Model):
+	name = models.CharField(max_length=50)
+	attribute=models.ManyToManyField(
+		Attribute,
+		through="ProductTypeAttribute",
+		related_name="product_type_attribute",)
+
+	def __str__(self):
+		return str(self.name)
+
+"""
+Attribute Value 
+"""
 class AttributeValue(models.Model):
 	# pass
 	attr_value = models.CharField( max_length=100)
 	attribute  = models.ForeignKey(Attribute, on_delete=models.CASCADE, related_name='attribute_value')
 
+	def __str__(self):
+	 	return str(self.attr_value)
+
+	# def __str__(self):
+	# 	return f"{self.id} - {self.attribute} - {self.attr_value}"
+
+"""
+Product Line 
+"""
 class ProductLine(models.Model):
 	prince = models.DecimalField( max_digits=12, decimal_places=3,null=False)
-	sku = models.CharField(max_length=100,null=False)
+	sku = models.CharField( max_length=100,null=False)
 	stock_qty = models.IntegerField(null=False)
 	product  = models.ForeignKey('product', on_delete=models.CASCADE, related_name='product_line')
 	is_active = models.BooleanField(default=False)
 	order = OrderField(blank=True ,unique_for_field='product')
-	attribute_value = models.ManyToManyField(AttributeValue,through="ProductLineAttributeValue")
-	objects = ActiveQueryset().as_manager()
+	attribute_value = models.ManyToManyField(
+		AttributeValue,
+		through="ProductLineAttributeValue",
+		related_name="product_attribute_value")
 
+	product_type = models.ForeignKey(
+		ProductType, 
+		on_delete=models.CASCADE, 
+		)
+	objects = ActiveQueryset().as_manager()
+	
 	def clean(self, exclude=None):
 		qs=ProductLine.objects.filter(product=self.product)
 		for obj in qs:
@@ -78,9 +127,70 @@ class ProductLine(models.Model):
 	def __str__(self):
 		return str(self.sku)
 
+"""
+Product Image 
+"""
+class ProductImage(models.Model):
+	name = models.CharField(max_length=100)
+	alternative_text = models.CharField(max_length=100)
+	url = models.ImageField(upload_to=None)
+	productline = models.ForeignKey(ProductLine, on_delete=models.CASCADE, related_name='product_image')
+	order = OrderField(blank=True ,unique_for_field='productline')
+
+	def clean(self, exclude=None):
+		qs=ProductImage.objects.filter(productline=self.productline)
+		for obj in qs:
+			if self.id != obj.id and self.order == obj.order:
+				raise ValidationError("Dublicate value.")
+
+	def save(self,*args, **kwargs):
+		self.full_clean()
+		return super(ProductImage,self).save(*args, **kwargs)
+
+	def __str__(self):
+		return str(self.name)
+
+"""
+Product Line Attribute Value 
+"""
 class ProductLineAttributeValue(models.Model):
-	attribute_value  = models.ForeignKey(AttributeValue, on_delete=models.CASCADE, related_name='product_attribute_value_av')
-	product_line  = models.ForeignKey(ProductLine, on_delete=models.CASCADE, related_name='product_attribute_value_pl')
+
+	attribute_value  = models.ForeignKey("AttributeValue", on_delete=models.CASCADE, related_name='product_attribute_value_av')
+	product_line  = models.ForeignKey("ProductLine", on_delete=models.CASCADE, related_name='product_attribute_value_pl')
 
 	class Meta:
 		unique_together = ("attribute_value","product_line")
+
+	def clean(self) -> None:
+		qs = (
+		ProductLineAttributeValue.objects.filter(
+		attribute_value=self.attribute_value
+		)
+		.filter(product_line=self.product_line)
+		.exists()
+		)
+
+		if not qs:
+			iqs = Attribute.objects.filter(
+			id__in=ProductLineAttributeValue.objects.filter(
+			attribute_value=self.attribute_value
+			).values_list("attribute_value__id", flat=True))
+
+			if self.attribute_value.id in list(iqs):
+				raise ValidationError("Duplicate attribute exist!")
+
+	def save(self,*args, **kwargs):
+		self.full_clean()
+		return super(ProductLine,self).save(*args, **kwargs)
+
+
+"""
+Product Type Attribute 
+"""
+class ProductTypeAttribute(models.Model):
+
+	product_type  = models.ForeignKey(ProductType, on_delete=models.CASCADE, related_name='product_type_attribute_pt')
+	attribute  = models.ForeignKey(Attribute, on_delete=models.CASCADE, related_name='product_type_attribute_at')
+
+	class Meta:
+		unique_together = ("product_type","attribute")
