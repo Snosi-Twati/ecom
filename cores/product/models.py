@@ -38,24 +38,6 @@ class Brand(models.Model):
 		return self.name
 
 """
-Product 
-"""
-class Product(models.Model):
-	name = models.CharField(max_length=100)
-	description =models.TextField(blank=True)
-	slug = models.SlugField(max_length=255,null=True,blank=True)
-	is_digital = models.BooleanField(null=False)
-	brand = models.ForeignKey('Brand', on_delete=models.CASCADE,default=-1)
-	category = TreeForeignKey('Category', on_delete=models.SET_NULL,null=True,blank=True)
-	is_active = models.BooleanField(default=False)
-	
-	objects = ActiveQueryset().as_manager()
-	# isactive = ActiveManager()
-
-	def __str__(self):
-		return self.name # + " === > is active ( "+ self.is_active.__str__()+" ) "
-
-"""
 Attribute 
 """
 class Attribute(models.Model):
@@ -80,6 +62,27 @@ class ProductType(models.Model):
 		return str(self.name)
 
 """
+Product 
+"""
+class Product(models.Model):
+	name = models.CharField(max_length=100)
+	description =models.TextField(blank=True)
+	slug = models.SlugField(max_length=255,null=True,blank=True)
+	is_digital = models.BooleanField(null=False)
+	brand = models.ForeignKey('Brand', on_delete=models.CASCADE,default=-1)
+	category = TreeForeignKey('Category', on_delete=models.SET_NULL,null=True,blank=True)
+	is_active = models.BooleanField(default=False)
+	product_type = models.ForeignKey(
+		ProductType, 
+		on_delete=models.CASCADE, 
+		)
+	objects = ActiveQueryset().as_manager()
+	# isactive = ActiveManager()
+
+	def __str__(self):
+		return self.name # + " === > is active ( "+ self.is_active.__str__()+" ) "
+
+"""
 Attribute Value 
 """
 class AttributeValue(models.Model):
@@ -87,16 +90,17 @@ class AttributeValue(models.Model):
 	attr_value = models.CharField( max_length=100)
 	attribute  = models.ForeignKey(Attribute, on_delete=models.CASCADE, related_name='attribute_value')
 
-	def __str__(self):
-	 	return str(self.attr_value)
-
 	# def __str__(self):
-	# 	return f"{self.id} - {self.attribute} - {self.attr_value}"
+	# 	return f"{self.attribute} - {self.attr_value}"
+
+	def __str__(self):
+		return f"{self.attribute.name}-{self.attr_value}"
 
 """
 Product Line 
 """
 class ProductLine(models.Model):
+	
 	prince = models.DecimalField( max_digits=12, decimal_places=3,null=False)
 	sku = models.CharField( max_length=100,null=False)
 	stock_qty = models.IntegerField(null=False)
@@ -108,10 +112,7 @@ class ProductLine(models.Model):
 		through="ProductLineAttributeValue",
 		related_name="product_attribute_value")
 
-	product_type = models.ForeignKey(
-		ProductType, 
-		on_delete=models.CASCADE, 
-		)
+	
 	objects = ActiveQueryset().as_manager()
 	
 	def clean(self, exclude=None):
@@ -125,7 +126,7 @@ class ProductLine(models.Model):
 		return super(ProductLine,self).save(*args, **kwargs)	
 	
 	def __str__(self):
-		return str(self.sku)
+		return str(self.id)
 
 """
 Product Image 
@@ -161,27 +162,27 @@ class ProductLineAttributeValue(models.Model):
 	class Meta:
 		unique_together = ("attribute_value","product_line")
 
-	def clean(self) -> None:
-		qs = (
-		ProductLineAttributeValue.objects.filter(
-		attribute_value=self.attribute_value
-		)
-		.filter(product_line=self.product_line)
-		.exists()
-		)
+	# def clean(self):
+	# 	qs = (
+	# 		ProductLineAttributeValue.objects.filter(
+	# 		attribute_value=self.attribute_value,
+	# 		product_line=self.product_line
+	# 		).exists()
+	# 	)
+		
+	# 	if not qs:
+	# 		iqs = Attribute.objects.filter(
+	# 		attribute_value=self.attribute_value
+	# 		).values_list("pk", flat=True)
+	# 		print(self.attribute_value)
+	# 		if self.attribute_value.attribute.id in list(iqs):
+	# 			raise ValidationError("Duplicate Attribute Exists")
 
-		if not qs:
-			iqs = Attribute.objects.filter(
-			id__in=ProductLineAttributeValue.objects.filter(
-			attribute_value=self.attribute_value
-			).values_list("attribute_value__id", flat=True))
 
-			if self.attribute_value.id in list(iqs):
-				raise ValidationError("Duplicate attribute exist!")
-
+	 
 	def save(self,*args, **kwargs):
 		self.full_clean()
-		return super(ProductLine,self).save(*args, **kwargs)
+		return super(ProductLineAttributeValue,self).save(*args, **kwargs)
 
 
 """

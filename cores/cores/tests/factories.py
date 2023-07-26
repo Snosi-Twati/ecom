@@ -23,6 +23,40 @@ class BrandFactory(factory.django.DjangoModelFactory):
 
 	name = factory.sequence( lambda n: "test_brand_%d" % n )
 
+class AttributeFactory(factory.django.DjangoModelFactory):
+	
+	class Meta:
+		model = Attribute
+	
+	name = factory.sequence( lambda n: "test_Size_%d" % n )
+	description =  factory.sequence( lambda n: "test_size description_%d" % n )
+
+class AttributeValueFactory(factory.django.DjangoModelFactory):
+
+	class Meta:
+		model = AttributeValue
+
+	attr_value = factory.sequence( lambda n: "test_value_%d" % n )
+	attribute = factory.SubFactory(AttributeFactory)
+
+	
+
+
+class ProductTypeFactory(factory.django.DjangoModelFactory):
+	
+	class Meta:
+		model = ProductType
+
+	name = 'Product Type Test '
+	# attribute = factory.SubFactory(AttributeFactory)
+
+	@factory.post_generation
+	def attribute(self,create,extracted, **kwargs):
+		if not create or not extracted:
+			return
+		self.attribute.add(*extracted)
+
+
 class ProductFactory(factory.django.DjangoModelFactory):
 
 	class Meta:
@@ -34,30 +68,8 @@ class ProductFactory(factory.django.DjangoModelFactory):
 	brand = factory.SubFactory(BrandFactory)
 	category = factory.SubFactory(CategoryFactory)
 	is_active = True
-
-class AttributeFactory(factory.django.DjangoModelFactory):
-
-	class Meta:
-		model = Attribute
+	product_type = factory.SubFactory(ProductTypeFactory)
 	
-	name = "size"
-	description =  "size description"
-
-class AttributeValueFactory(factory.django.DjangoModelFactory):
-
-	class Meta:
-		model = AttributeValue
-
-	attr_value = 30
-	attribute = factory.SubFactory(AttributeFactory)
-
-class ProductTypeFactory(factory.django.DjangoModelFactory):
-
-	class Meta:
-		model = ProductType
-
-	name = 'Product Type test '
-	attribute = factory.SubFactory(AttributeFactory)
 
 class ProductTypeAttributeFactory(factory.django.DjangoModelFactory):
 	
@@ -65,7 +77,8 @@ class ProductTypeAttributeFactory(factory.django.DjangoModelFactory):
 		model = ProductTypeAttribute
 	
 	product_type = factory.SubFactory(ProductTypeFactory)
-	attribute = factory.SubFactory(AttributeFactory)	
+	attribute = factory.SubFactory(AttributeFactory)
+
 
 class ProductLineFactory(factory.django.DjangoModelFactory):
 
@@ -78,7 +91,14 @@ class ProductLineFactory(factory.django.DjangoModelFactory):
 	stock_qty = 70
 	is_active =True
 	attribute_value = factory.SubFactory(AttributeValueFactory)
-	product_type = factory.SubFactory(ProductTypeFactory)
+	order =1
+	# product_type = factory.SubFactory(ProductTypeFactory)
+
+	@factory.post_generation
+	def attribute_value(self,create,extracted, **kwargs):
+		if not create or not extracted:
+			return
+		self.attribute_value.add(*extracted)
 
 class ProductLineAttributeValueFactory(factory.django.DjangoModelFactory):
 	

@@ -50,7 +50,12 @@ class  ProductViewSet(viewsets.ViewSet):# ):viewsets.ModelViewSet
 		"""
 		retrieve data by  Product ID
 		"""
-		serializer = ProductSerializer(self.queryset.filter(pk=pk).select_related("category","brand",),many=True)
+		serializer = ProductSerializer(
+			self.queryset.filter(pk=pk)
+			.select_related("category","brand",),
+			# .prefetch_related(Prefetch("product_line__product_image__product"))
+			# .prefetch_related(Prefetch("product_line__attribute_value__attribute")),
+			many=True,)
 		# x = self.queryset.filter(pk=pk)
 		# # print(connection.queries)
 		# sqlformatted = format(str(x.query),reindent = True)
