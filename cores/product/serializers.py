@@ -19,20 +19,18 @@ class CategorySerializer(serializers.ModelSerializer):
 		# fields = "__all__"
 		fields = ["name"]
 
-
 class BrandSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Brand
-		# fields = "__all__"
+		fields = "__all__"
 
-		fields = ["name"]
+		# fields = ["name"]
 
 class ProductImageSerializer(serializers.ModelSerializer):
 	
 	class Meta:
 		model =  ProductImage
 		exclude = ('id',)	
-
 
 class AttributeSerializer(serializers.ModelSerializer):
 
@@ -44,7 +42,6 @@ class AttributeSerializer(serializers.ModelSerializer):
 			"description",
 			)
 	
-
 class AttributeValueSerializer(serializers.ModelSerializer):
 	attribute = AttributeSerializer(many=False)
 	class Meta:
@@ -53,7 +50,6 @@ class AttributeValueSerializer(serializers.ModelSerializer):
 			"attribute",
 			"attr_value",
 		)
-
 
 class ProductLineSerializer(serializers.ModelSerializer):
 	# product_image = ProductImageSerializer(many=True)

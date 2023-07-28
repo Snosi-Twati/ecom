@@ -15,7 +15,8 @@ class CategoryFactory(factory.django.DjangoModelFactory):
 	class Meta:
 		model = Category
 
-	name = factory.sequence( lambda n: "test_category_%d" % n ) #"test_category"
+	name = factory.sequence( lambda n: "test_name_category_%d" % n ) #"test_category"
+	slug = factory.sequence( lambda n: "test-slug-category-%d" % n )
 
 class BrandFactory(factory.django.DjangoModelFactory):
 	class Meta:
@@ -47,7 +48,8 @@ class ProductTypeFactory(factory.django.DjangoModelFactory):
 	class Meta:
 		model = ProductType
 
-	name = 'Product Type Test '
+	name =  factory.sequence( lambda n: "Product Type Test %d" % n )
+	parent = None
 	# attribute = factory.SubFactory(AttributeFactory)
 
 	@factory.post_generation
@@ -64,7 +66,9 @@ class ProductFactory(factory.django.DjangoModelFactory):
 
 	name = "test_product"
 	description = "test_description"
-	is_digital = True
+	slug = "slug-test"
+	pid = factory.sequence( lambda n: "0000_%d" % n )
+	is_digital = False
 	brand = factory.SubFactory(BrandFactory)
 	category = factory.SubFactory(CategoryFactory)
 	is_active = True
@@ -85,11 +89,11 @@ class ProductLineFactory(factory.django.DjangoModelFactory):
 	class Meta:
 		model = ProductLine
 	
-	prince = 200
+	price = 123456789.123
 	sku = "test_product"
 	product = factory.SubFactory(ProductFactory)
 	stock_qty = 70
-	is_active =True
+	is_active =False
 	attribute_value = factory.SubFactory(AttributeValueFactory)
 	order =1
 	# product_type = factory.SubFactory(ProductTypeFactory)
@@ -113,7 +117,8 @@ class ProductImageFactory(factory.django.DjangoModelFactory):
 	class Meta:
 		model = ProductImage
 	
-	name = "test-image.jpg"
-	alternative_text = "test-image"
+	name = "test-image jpg"
+	alternative_text = "test-image alternative-text"
 	productline = factory.SubFactory(ProductLineFactory)
 	url = "test-none/test-none/test-image.jpg"
+	order =1

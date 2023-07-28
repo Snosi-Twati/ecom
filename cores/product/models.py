@@ -2,6 +2,7 @@ from django.db import models
 from mptt.models import MPTTModel, TreeForeignKey
 from .fields import OrderField
 from django.core.exceptions import ValidationError
+from django.db.utils import IntegrityError
 
 """
 Active Query set 
@@ -15,21 +16,24 @@ class ActiveQueryset(models.QuerySet):
 Category 
 """
 class Category (MPTTModel): #(models.Model):
-	name = models.CharField(max_length=100)
+	name = models.CharField(max_length=235,unique=True)
+	slug = models.SlugField(max_length=255,unique=True)
+	is_active = models.BooleanField(default=False)
 	parent = TreeForeignKey("self", on_delete=models.PROTECT, null=True, blank=True) #models.IntegerField()# 
 	
+	objects = ActiveQueryset().as_manager()
 
 	class MPTTMeta:
 		order_insertion_by = ["name"]
 
 	def __str__(self):
-		return self.name.__str__()
+		return self.name
 
 """
 Brand 
 """
 class Brand(models.Model):
-	name = models.CharField(max_length=100)
+	name = models.CharField(max_length=100,unique=True)
 
 	# def __unicode__(self):
     	# 	return self.name
@@ -52,7 +56,8 @@ class Attribute(models.Model):
 Product Type
 """
 class ProductType(models.Model):
-	name = models.CharField(max_length=50)
+	name = models.CharField(max_length=50,unique=True)
+	parent = models.ForeignKey("self", on_delete=models.PROTECT,null=True)
 	attribute=models.ManyToManyField(
 		Attribute,
 		through="ProductTypeAttribute",
@@ -68,14 +73,17 @@ class Product(models.Model):
 	name = models.CharField(max_length=100)
 	description =models.TextField(blank=True)
 	slug = models.SlugField(max_length=255,null=True,blank=True)
-	is_digital = models.BooleanField(null=False)
+	pid = models.CharField( max_length=10,unique=True)
+	is_digital = models.BooleanField(null=False,default=False)
 	brand = models.ForeignKey('Brand', on_delete=models.CASCADE,default=-1)
-	category = TreeForeignKey('Category', on_delete=models.SET_NULL,null=True,blank=True)
+	category = TreeForeignKey('Category', on_delete=models.PROTECT,null=True,blank=True)
 	is_active = models.BooleanField(default=False)
+	create_at =models.DateTimeField( auto_now_add=True, editable=False)
 	product_type = models.ForeignKey(
 		ProductType, 
 		on_delete=models.CASCADE, 
 		)
+
 	objects = ActiveQueryset().as_manager()
 	# isactive = ActiveManager()
 
@@ -101,10 +109,10 @@ Product Line
 """
 class ProductLine(models.Model):
 	
-	prince = models.DecimalField( max_digits=12, decimal_places=3,null=False)
+	price = models.DecimalField( max_digits=12, decimal_places=3,null=False)
 	sku = models.CharField( max_length=100,null=False)
 	stock_qty = models.IntegerField(null=False)
-	product  = models.ForeignKey('product', on_delete=models.CASCADE, related_name='product_line')
+	product  = models.ForeignKey('product', on_delete=models.PROTECT, related_name='product_line')
 	is_active = models.BooleanField(default=False)
 	order = OrderField(blank=True ,unique_for_field='product')
 	attribute_value = models.ManyToManyField(
@@ -131,9 +139,10 @@ class ProductLine(models.Model):
 """
 Product Image 
 """
+
 class ProductImage(models.Model):
-	name = models.CharField(max_length=100)
-	alternative_text = models.CharField(max_length=100)
+	name = models.CharField(max_length=100,blank=False)
+	alternative_text = models.CharField(max_length=100,blank=False)
 	url = models.ImageField(upload_to=None)
 	productline = models.ForeignKey(ProductLine, on_delete=models.CASCADE, related_name='product_image')
 	order = OrderField(blank=True ,unique_for_field='productline')
