@@ -50,14 +50,14 @@ class Attribute(models.Model):
 	description =models.TextField(blank=True)
 
 	def __str__(self):
-		return str(self.name)
+		return self.name
 
 """
 Product Type
 """
 class ProductType(models.Model):
 	name = models.CharField(max_length=50,unique=True)
-	parent = models.ForeignKey("self", on_delete=models.PROTECT,null=True)
+	parent = models.ForeignKey("self", on_delete=models.PROTECT,null=True,blank=True)
 	attribute=models.ManyToManyField(
 		Attribute,
 		through="ProductTypeAttribute",
@@ -80,7 +80,7 @@ class Product(models.Model):
 	is_active = models.BooleanField(default=False)
 	create_at =models.DateTimeField( auto_now_add=True, editable=False)
 	product_type = models.ForeignKey(
-		ProductType, 
+		"ProductType",null=True,blank=True,
 		on_delete=models.CASCADE, 
 		)
 

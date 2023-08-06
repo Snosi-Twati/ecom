@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_field
 from .models import (
 	Brand, 
 	Category, 
@@ -60,7 +61,7 @@ class ProductLineSerializer(serializers.ModelSerializer):
 		# fields = "__all__"
 		# exclude =("id","is_active","product")
 		fields = (
-			"prince",
+			"price",
 			"sku",
 			"stock_qty",
 			"order",
@@ -83,9 +84,9 @@ class ProductSerializer(serializers.ModelSerializer):
 
 	brand_name 	= serializers.CharField(source="brand.name")
 	category_name 	= serializers.CharField(source="category.name")
-	product_line 	= ProductLineSerializer(many=True)
-	# product_type	= serializers.CharField(source="product_type.name")
-	attribute 	= serializers.SerializerMethodField()
+	# product_line 	= ProductLineSerializer(many=True, read_only=True)
+	# product_type	= serializers.CharField(source="producttype.name")
+	# attribute 	= serializers.SerializerMethodField()
 
 	class Meta:
 		model = Product
@@ -98,16 +99,19 @@ class ProductSerializer(serializers.ModelSerializer):
 			"brand_name", 
 			"category_name", 
 			"is_active",
-			"product_line",
+			# "product_line",
 			# "product_type",
-			"attribute"
+			# "attribute"
 			)
+
 	
 	def get_attribute(self, obj):
 
 		attribute = Attribute.objects.filter(product_type_attribute__product__id=obj.id)
 		return AttributeSerializer(attribute, many=True).data
-	
+
+
+
 	def to_representation(self, instance):
 		data =  super().to_representation(instance)
 		av_data = data.pop("attribute")
